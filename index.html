@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Portal of Randomness - Enter the Weird Web</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            portal: {
+              bg: '#0B0F19',
+              card: '#161F33',
+              accent: '#8B5CF6',
+              neon: '#00F0FF',
+              pink: '#FF007A'
+            }
+          },
+          animation: {
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'spin-slow': 'spin 12s linear infinite',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap');
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background-color: #0B0F19;
+      color: #E2E8F0;
+    }
+    .neon-border {
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+    }
+    .neon-text {
+      text-shadow: 0 0 10px rgba(139, 92, 246, 0.6);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between relative overflow-x-hidden">
+
+  <!-- Warp Animation Canvas -->
+  <canvas id="warpCanvas" class="fixed inset-0 pointer-events-none z-50 opacity-0 transition-opacity duration-300"></canvas>
+
+  <!-- Navigation Bar -->
+  <header class="border-b border-slate-800 bg-slate-900/60 backdrop-blur-md sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <span class="text-3xl animate-spin-slow">🌀</span>
+        <h1 class="text-xl font-bold bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-500 bg-clip-text text-transparent">
+          The Weird Portal
+        </h1>
+      </div>
+      
+      <!-- Teleport Stats -->
+      <div class="flex items-center space-x-6 text-sm">
+        <div class="hidden sm:flex items-center space-x-2 bg-slate-800/80 px-3 py-1.5 rounded-full border border-slate-700">
+          <span>⚡ Warps:</span>
+          <span id="teleportCount" class="font-bold text-cyan-400">0</span>
+        </div>
+        <div class="hidden sm:flex items-center space-x-2 bg-slate-800/80 px-3 py-1.5 rounded-full border border-slate-700">
+          <span>🔥 Streak:</span>
+          <span id="streakCount" class="font-bold text-pink-400">0</span>
+        </div>
+        <button onclick="openModal('sponsorModal')" class="bg-purple-600 hover:bg-purple-500 text-white font-semibold px-4 py-1.5 rounded-full text-sm transition">
+          Submit Site
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Hero Section -->
+  <main class="max-w-6xl mx-auto px-4 py-8 flex-1 flex flex-col items-center">
+    
+    <!-- Hero Header -->
+    <div class="text-center max-w-2xl my-6">
+      <h2 class="text-4xl sm:text-5xl font-extrabold mb-4 tracking-tight">
+        Feeling Bored? <br/>
+        <span class="bg-gradient-to-r from-cyan-400 to-pink-500 bg-clip-text text-transparent">Teleport into Randomness</span>
+      </h2>
+      <p class="text-slate-400 text-base sm:text-lg">
+        Click the glowing button below to warp to a totally unexpected, interactive mini-app or bizarre corner of the internet.
+      </p>
+    </div>
+
+    <!-- Main Teleport Trigger Button -->
+    <div class="my-6 relative group">
+      <div class="absolute -inset-1 bg-gradient-to-r from-cyan-500 to-pink-500 rounded-2xl blur opacity-75 group-hover:opacity-100 transition duration-300 animate-pulse"></div>
+      <button id="teleportBtn" onclick="triggerTeleport()" class="relative px-8 py-5 bg-slate-900 hover:bg-slate-800 rounded-2xl text-2xl font-bold text-white flex items-center space-x-3 transition transform active:scale-95 shadow-2xl border border-slate-700">
+        <span>🌀 Teleport Now!</span>
+      </button>
+    </div>
+
+    <!-- Rate Experience Widget -->
+    <div id="ratingWidget" class="hidden my-4 bg-slate-800/60 backdrop-blur border border-slate-700 rounded-xl px-4 py-2 flex items-center space-x-3 text-sm">
+      <span class="text-slate-400">Rate this experience:</span>
+      <button onclick="rateExperience('🤯')" class="hover:scale-125 transition">🤯</button>
+      <button onclick="rateExperience('😂')" class="hover:scale-125 transition">😂</button>
+      <button onclick="rateExperience('😵‍💫')" class="hover:scale-125 transition">😵‍💫</button>
+      <button onclick="rateExperience('💩')" class="hover:scale-125 transition">💩</button>
+    </div>
+
+    <!-- Dynamic Display Container for Mini-Apps -->
+    <div id="portalDisplay" class="w-full max-w-4xl min-h-[450px] bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl my-6 p-6 flex flex-col items-center justify-center relative overflow-hidden">
+      
+      <!-- Welcome Screen inside Canvas -->
+      <div id="welcomeState" class="text-center space-y-4">
+        <div class="text-6xl animate-bounce">✨</div>
+        <h3 class="text-2xl font-bold text-slate-200">Your Portal Destination Will Appear Here</h3>
+        <p class="text-slate-400 max-w-md mx-auto">Click "Teleport Now!" above or choose one of the curated interactive toys from the directory below.</p>
+      </div>
+
+      <!-- Container for rendered mini-apps -->
+      <div id="appContainer" class="w-full h-full flex flex-col items-center justify-center hidden"></div>
+    </div>
+
+    <!-- Mini-Apps Directory Grid -->
+    <div class="w-full max-w-4xl mt-10">
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="text-xl font-bold text-slate-200">🎮 Interactive Mini-Apps Directory</h3>
+        <span class="text-xs bg-slate-800 text-cyan-400 border border-slate-700 px-3 py-1 rounded-full">10 Experiences Built-In</span>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        <button onclick="launchApp(0)" class="bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-cyan-500/50 p-4 rounded-xl flex flex-col items-center text-center transition group">
+          <span class="text-3xl mb-2 group-hover:scale-110 transition">🫧</span>
+          <span class="font-semibold text-sm text-slate-200">Bubble Wrap</span>
+        </button>
+
+        <button onclick="launchApp(1)" class="bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-pink-500/50 p-4 rounded-xl flex flex-col items-center text-center transition group">
+          <span class="text-3xl mb-2 group-hover:scale-110 transition">⚽</span>
+          <span class="font-semibold text-sm text-slate-200">Bouncy Balls</span>
+        </button>
+
+        <button onclick="launchApp(2)" class="bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-purple-500/50 p-4 rounded-xl flex flex-col items-center text-center transition group">
+          <span class="text-3xl mb-2 group-hover:scale-110 transition">🎹</span>
+          <span class="font-semibold text-sm text-slate-200">Synth Grid</span>
+        </button>
+
+        <button onclick="launchApp(3)" class="bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-green-500/50 p-4 rounded-xl flex flex-col items-center text-center transition group">
+          <span class="text-3xl mb-2 group-hover:scale-110 transition">🌧️</span>
+          <span class="font-semibold text-sm text-slate-200">Matrix Rain</span>
+        </button>
+
+        <button onclick="launchApp(4)" class="bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-yellow-500/50 p-4 rounded-xl flex flex-col items-center text-center transition group">
+          <span class="text-3xl mb-2 group-hover:scale-110 transition">🐱</span>
+          <span class="font-semibold text-sm text-slate-200">DVD Cat Logo</span>
+        </button>
+
+        <button onclick="launchApp(5)" class="bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-cyan-500/50 p-4 rounded-xl flex flex-col items-center text-center transition group">
+          <span class="text-3xl mb-2 group-hover:scale-110 transition">📦</span>
+          <span class="font-semibold text-sm text-slate-200">Emoji Physics</span>
+        </button>
+
+        <button onclick="launchApp(6)" class="bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-pink-500/50 p-4 rounded-xl flex flex-col items-center text-center transition group">
+          <span class="text-3xl mb-2 group-hover:scale-110 transition">🤪</span>
+          <span class="font-semibold text-sm text-slate-200">Fake Wisdom</span>
+        </button>
+
+        <button onclick="launchApp(7)" class="bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-purple-500/50 p-4 rounded-xl flex flex-col items-center text-center transition group">
+          <span class="text-3xl mb-2 group-hover:scale-110 transition">🎨</span>
+          <span class="font-semibold text-sm text-slate-200">Neon Brush</span>
+        </button>
+
+        <button onclick="launchApp(8)" class="bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-green-500/50 p-4 rounded-xl flex flex-col items-center text-center transition group">
+          <span class="text-3xl mb-2 group-hover:scale-110 transition">🔊</span>
+          <span class="font-semibold text-sm text-slate-200">Soundboard</span>
+        </button>
+
+        <button onclick="launchApp(9)" class="bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-yellow-500/50 p-4 rounded-xl flex flex-col items-center text-center transition group">
+          <span class="text-3xl mb-2 group-hover:scale-110 transition">👻</span>
+          <span class="font-semibold text-sm text-slate-200">Ghost Clicker</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Monetization / Featured Weird Product Banner -->
+    <div class="w-full max-w-4xl my-10 bg-gradient-to-r from-purple-900/40 via-slate-900 to-cyan-900/40 border border-slate-800 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between">
+      <div class="flex items-center space-x-4 mb-4 sm:mb-0">
+        <div class="text-4xl bg-slate-800 p-3 rounded-xl">🎁</div>
+        <div>
+          <div class="text-xs uppercase font-bold text-cyan-400 tracking-wider">Featured Weird Product</div>
+          <h4 class="text-lg font-bold text-slate-100">Self-Stirring Automatic Coffee Mug</h4>
+          <p class="text-sm text-slate-400">Never use a spoon again. Magnetic magic at the push of a button.</p>
+        </div>
+      </div>
+      <button onclick="alert('Affiliate Link Clicked! Redirecting to partner product...')" class="whitespace-nowrap bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-5 py-2.5 rounded-xl transition">
+        Check It Out ↗
+      </button>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800 bg-slate-950/80 py-6">
+    <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between text-sm text-slate-500 space-y-4 sm:space-y-0">
+      <div>© 2026 The Portal of Randomness. Built for fun & discovery.</div>
+      <div class="flex items-center space-x-4">
+        <button onclick="openModal('shareModal')" class="hover:text-cyan-400 transition">Share Portal 🚀</button>
+        <button onclick="openModal('tipModal')" class="hover:text-pink-400 transition">Buy Us A Coffee ☕</button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Modal: Sponsor / Submit Site -->
+  <div id="sponsorModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 relative">
+      <button onclick="closeModal('sponsorModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white">✕</button>
+      <h3 class="text-xl font-bold mb-2 text-slate-100">Submit Your Weird Website</h3>
+      <p class="text-sm text-slate-400 mb-4">Have a unique web tool or fun project? Submit it to get featured in our portal!</p>
+      <form onsubmit="handleFormSubmit(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Website URL</label>
+          <input type="url" required placeholder="https://yourweirdwebsite.com" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-400">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Description</label>
+          <textarea required placeholder="What makes your site weird or fun?" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-400 h-20"></textarea>
+        </div>
+        <button type="submit" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-2.5 rounded-lg transition">Submit Website</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Share -->
+  <div id="shareModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-6 text-center relative">
+      <button onclick="closeModal('shareModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white">✕</button>
+      <div class="text-4xl mb-3">🚀</div>
+      <h3 class="text-xl font-bold mb-2 text-slate-100">Share The Portal</h3>
+      <p class="text-sm text-slate-400 mb-6">Spread the randomness with your friends!</p>
+      <button onclick="copyPortalLink()" class="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold py-2.5 rounded-lg transition mb-3">
+        📋 Copy Portal Link
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal: Tip Jar -->
+  <div id="tipModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-6 text-center relative">
+      <button onclick="closeModal('tipModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white">✕</button>
+      <div class="text-4xl mb-3">☕</div>
+      <h3 class="text-xl font-bold mb-2 text-slate-100">Support The Portal</h3>
+      <p class="text-sm text-slate-400 mb-6">If you enjoyed exploring weird sites today, buy the dev a virtual coffee!</p>
+      <button onclick="alert('Thank you for your generosity! 💖'); closeModal('tipModal');" class="w-full bg-pink-600 hover:bg-pink-500 text-white font-bold py-2.5 rounded-lg transition">
+        Donate $3 (Buy Coffee)
+      </button>
+    </div>
+  </div>
+
+  <!-- JavaScript Logic -->
+  <script>
+    // State Tracking
+    let warps = 0;
+    let streak = 0;
+    let activeAppInterval = null;
+    let audioCtx = null;
+
+    // Web Audio Synthesizer Engine
+    function playAudioTone(freq, type = 'sine', duration = 0.15) {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    // Warp Canvas Effect
+    function runWarpAnimation(callback) {
+      const canvas = document.getElementById('warpCanvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      canvas.classList.remove('opacity-0');
+      canvas.classList.add('opacity-100');
+
+      let stars = Array.from({length: 200}, () => ({
+        x: (Math.random() - 0.5) * canvas.width,
+        y: (Math.random() - 0.5) * canvas.height,
+        z: Math.random() * canvas.width
+      }));
+
+      let frame = 0;
+      function animate() {
+        ctx.fillStyle = 'rgba(11, 15, 25, 0.3)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        let cx = canvas.width / 2;
+        let cy = canvas.height / 2;
+
+        stars.forEach(s => {
+          s.z -= 15;
+          if (s.z <= 0) s.z = canvas.width;
+          let k = 128 / s.z;
+          let px = s.x * k + cx;
+          let py = s.y * k + cy;
+
+          if (px >= 0 && px <= canvas.width && py >= 0 && py <= canvas.height) {
+            let size = (1 - s.z / canvas.width) * 4;
+            ctx.fillStyle = frame % 2 === 0 ? '#00F0FF' : '#FF007A';
+            ctx.fillRect(px, py, size, size);
+          }
+        });
+
+        frame++;
+        if (frame < 30) {
+          requestAnimationFrame(animate);
+        } else {
+          canvas.classList.remove('opacity-100');
+          canvas.classList.add('opacity-0');
+          callback();
+        }
+      }
+      playAudioTone(300, 'sawtooth', 0.5);
+      animate();
+    }
+
+    // Main Teleport Handler
+    function triggerTeleport() {
+      runWarpAnimation(() => {
+        warps++;
+        streak++;
+        document.getElementById('teleportCount').innerText = warps;
+        document.getElementById('streakCount').innerText = streak;
+        document.getElementById('ratingWidget').classList.remove('hidden');
+
+        // Pick a random mini-app (0 to 9)
+        const randomIndex = Math.floor(Math.random() * 10);
+        launchApp(randomIndex);
+      });
+    }
+
+    function rateExperience(emoji) {
+      alert(`Thanks for rating ${emoji}! Warp to another destination anytime.`);
+    }
+
+    // Modal Control Functions
+    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+    function handleFormSubmit(e) {
+      e.preventDefault();
+      alert('Thank you! Your website submission has been received for review.');
+      closeModal('sponsorModal');
+    }
+    function copyPortalLink() {
+      navigator.clipboard.writeText(window.location.href);
+      alert('Portal link copied to clipboard!');
+      closeModal('shareModal');
+    }
+
+    // Clear active app loop/interval
+    function clearAppContainer() {
+      if (activeAppInterval) clearInterval(activeAppInterval);
+      const container = document.getElementById('appContainer');
+      container.innerHTML = '';
+      document.getElementById('welcomeState').classList.add('hidden');
+      container.classList.remove('hidden');
+      return container;
+    }
+
+    // MINI-APP DIRECTORY LOGIC
+    function launchApp(id) {
+      const container = clearAppContainer();
+
+      switch(id) {
+        case 0: // Bubble Wrap
+          container.innerHTML = `
+            <div class="text-center w-full">
+              <h4 class="text-lg font-bold mb-3 text-cyan-400">🫧 Infinite Bubble Wrap</h4>
+              <div class="grid grid-cols-6 sm:grid-cols-8 gap-3 max-w-md mx-auto bg-slate-800 p-4 rounded-xl border border-slate-700">
+                ${Array(24).fill(0).map(() => `<button onclick="popBubble(this)" class="w-10 h-10 rounded-full bg-cyan-500/30 border border-cyan-400/50 hover:bg-cyan-400 transition shadow-inner"></button>`).join('')}
+              </div>
+            </div>`;
+          break;
+
+        case 1: // Bouncy Balls
+          container.innerHTML = `
+            <div class="text-center w-full flex flex-col items-center">
+              <h4 class="text-lg font-bold mb-2 text-pink-400">⚽ Bouncy Ball Physics (Click Canvas to Spawn)</h4>
+              <canvas id="bouncyCanvas" width="500" height="300" class="bg-slate-950 border border-slate-800 rounded-xl cursor-pointer w-full max-w-lg"></canvas>
+            </div>`;
+          initBouncyCanvas();
+          break;
+
+        case 2: // Synth Grid
+          container.innerHTML = `
+            <div class="text-center w-full">
+              <h4 class="text-lg font-bold mb-3 text-purple-400">🎹 16-Pad Synth Matrix</h4>
+              <div class="grid grid-cols-4 gap-3 max-w-xs mx-auto bg-slate-800 p-4 rounded-xl border border-slate-700">
+                ${Array(16).fill(0).map((_, i) => `
+                  <button onclick="playAudioTone(${200 + i * 40}, 'triangle', 0.2)" class="w-14 h-14 bg-purple-600/40 border border-purple-500 rounded-lg hover:bg-purple-400 active:scale-90 transition font-bold text-xs">
+                    Pad ${i+1}
+                  </button>
+                `).join('')}
+              </div>
+            </div>`;
+          break;
+
+        case 3: // Matrix Rain
+          container.innerHTML = `
+            <div class="text-center w-full flex flex-col items-center">
+              <h4 class="text-lg font-bold mb-2 text-green-400">🌧️ Matrix Rain Visualizer</h4>
+              <canvas id="matrixCanvas" width="500" height="300" class="bg-black border border-slate-800 rounded-xl w-full max-w-lg"></canvas>
+            </div>`;
+          initMatrixRain();
+          break;
+
+        case 4: // DVD Cat Logo
+          container.innerHTML = `
+            <div class="text-center w-full flex flex-col items-center">
+              <h4 class="text-lg font-bold mb-2 text-yellow-400">🐱 Bouncing Cat Logo</h4>
+              <canvas id="dvdCanvas" width="500" height="300" class="bg-slate-950 border border-slate-800 rounded-xl w-full max-w-lg"></canvas>
+            </div>`;
+          initDVDLogo();
+          break;
+
+        case 5: // Emoji Physics
+          container.innerHTML = `
+            <div class="text-center w-full">
+              <h4 class="text-lg font-bold mb-3 text-cyan-400">📦 Emoji Rain Generator</h4>
+              <div id="emojiBox" class="w-full h-64 bg-slate-950 border border-slate-800 rounded-xl relative overflow-hidden flex items-center justify-center">
+                <span class="text-slate-600 text-sm">Click button below to drop emojis!</span>
+              </div>
+              <button onclick="dropEmoji()" class="mt-4 bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-2 rounded-lg font-bold text-sm">Drop Emoji 🍕</button>
+            </div>`;
+          break;
+
+        case 6: // Fake Wisdom Generator
+          container.innerHTML = `
+            <div class="text-center max-w-md mx-auto p-6 bg-slate-800 border border-slate-700 rounded-xl">
+              <h4 class="text-lg font-bold mb-3 text-pink-400">🤪 AI Nonsense Wisdom</h4>
+              <p id="quoteText" class="text-slate-200 italic mb-4">"Never fry bacon without wearing a cape on Tuesdays."</p>
+              <button onclick="generateWisdom()" class="bg-pink-600 hover:bg-pink-500 text-white px-4 py-2 rounded-lg font-bold text-sm">New Wisdom 💡</button>
+            </div>`;
+          break;
+
+        case 7: // Neon Brush Doodle
+          container.innerHTML = `
+            <div class="text-center w-full flex flex-col items-center">
+              <h4 class="text-lg font-bold mb-2 text-purple-400">🎨 Neon Glow Brush (Draw on Canvas)</h4>
+              <canvas id="drawCanvas" width="500" height="300" class="bg-slate-950 border border-slate-800 rounded-xl cursor-crosshair w-full max-w-lg"></canvas>
+            </div>`;
+          initDrawCanvas();
+          break;
+
+        case 8: // Soundboard
+          container.innerHTML = `
+            <div class="text-center w-full">
+              <h4 class="text-lg font-bold mb-3 text-green-400">🔊 Retro Sound Effects Board</h4>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-md mx-auto">
+                <button onclick="playAudioTone(800, 'square', 0.1)" class="p-3 bg-slate-800 border border-slate-700 rounded-lg hover:border-green-400 text-sm font-semibold">Laser ⚡</button>
+                <button onclick="playAudioTone(150, 'sawtooth', 0.4)" class="p-3 bg-slate-800 border border-slate-700 rounded-lg hover:border-green-400 text-sm font-semibold">Boing 🌀</button>
+                <button onclick="playAudioTone(600, 'sine', 0.3)" class="p-3 bg-slate-800 border border-slate-700 rounded-lg hover:border-green-400 text-sm font-semibold">Ping 🔔</button>
+                <button onclick="playAudioTone(100, 'triangle', 0.5)" class="p-3 bg-slate-800 border border-slate-700 rounded-lg hover:border-green-400 text-sm font-semibold">Thump 🥁</button>
+              </div>
+            </div>`;
+          break;
+
+        case 9: // Ghost Clicker Game
+          container.innerHTML = `
+            <div class="text-center w-full">
+              <h4 class="text-lg font-bold mb-2 text-yellow-400">👻 Ghost Clicker Game</h4>
+              <p class="text-xs text-slate-400 mb-3">Catch the ghost before it teleports!</p>
+              <div id="ghostArena" class="w-full h-64 bg-slate-950 border border-slate-800 rounded-xl relative overflow-hidden flex items-center justify-center">
+                <button id="ghostBtn" onclick="catchGhost()" class="absolute text-3xl transition-all duration-300">👻</button>
+              </div>
+              <div class="mt-3 text-sm font-bold text-slate-300">Ghosts Caught: <span id="ghostScore" class="text-yellow-400">0</span></div>
+            </div>`;
+          moveGhost();
+          break;
+      }
+    }
+
+    // Mini-App Specific Implementations
+    function popBubble(btn) {
+      playAudioTone(500, 'sine', 0.05);
+      btn.style.opacity = '0.2';
+      btn.disabled = true;
+    }
+
+    function initBouncyCanvas() {
+      const cvs = document.getElementById('bouncyCanvas');
+      if (!cvs) return;
+      const ctx = cvs.getContext('2d');
+      let balls = [];
+
+      cvs.onclick = (e) => {
+        const rect = cvs.getBoundingClientRect();
+        balls.push({
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top,
+          vx: (Math.random() - 0.5) * 6,
+          vy: (Math.random() - 0.5) * 6,
+          color: `hsl(${Math.random() * 360}, 100%, 50%)`
+        });
+        playAudioTone(400, 'sine', 0.05);
+      };
+
+      activeAppInterval = setInterval(() => {
+        ctx.fillStyle = 'rgba(11, 15, 25, 0.3)';
+        ctx.fillRect(0, 0, cvs.width, cvs.height);
+
+        balls.forEach(b => {
+          b.x += b.vx;
+          b.y += b.vy;
+          b.vy += 0.2; // Gravity
+
+          if (b.x < 10 || b.x > cvs.width - 10) b.vx *= -0.9;
+          if (b.y > cvs.height - 10) { b.y = cvs.height - 10; b.vy *= -0.8; }
+
+          ctx.fillStyle = b.color;
+          ctx.beginPath();
+          ctx.arc(b.x, b.y, 8, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      }, 1000/60);
+    }
+
+    function initMatrixRain() {
+      const cvs = document.getElementById('matrixCanvas');
+      if (!cvs) return;
+      const ctx = cvs.getContext('2d');
+      const cols = Math.floor(cvs.width / 20);
+      const drops = Array(cols).fill(1);
+
+      activeAppInterval = setInterval(() => {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+        ctx.fillRect(0, 0, cvs.width, cvs.height);
+        ctx.fillStyle = '#00FF66';
+        ctx.font = '15px monospace';
+
+        drops.forEach((y, i) => {
+          const char = String.fromCharCode(0x30A0 + Math.random() * 96);
+          ctx.fillText(char, i * 20, y * 20);
+          if (y * 20 > cvs.height && Math.random() > 0.975) drops[i] = 0;
+          drops[i]++;
+        });
+      }, 50);
+    }
+
+    function initDVDLogo() {
+      const cvs = document.getElementById('dvdCanvas');
+      if (!cvs) return;
+      const ctx = cvs.getContext('2d');
+      let x = 100, y = 100, vx = 2, vy = 2;
+
+      activeAppInterval = setInterval(() => {
+        ctx.fillStyle = '#0B0F19';
+        ctx.fillRect(0, 0, cvs.width, cvs.height);
+
+        x += vx;
+        y += vy;
+
+        if (x <= 0 || x >= cvs.width - 40) vx *= -1;
+        if (y <= 0 || y >= cvs.height - 30) vy *= -1;
+
+        ctx.font = '28px sans-serif';
+        ctx.fillText('🐱', x, y + 25);
+      }, 1000/60);
+    }
+
+    function dropEmoji() {
+      const box = document.getElementById('emojiBox');
+      const emojis = ['🍕', '🛸', '🦄', '🌮', '🤖', '👾'];
+      const span = document.createElement('span');
+      span.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+      span.className = 'absolute text-3xl transition-all duration-1000';
+      span.style.left = Math.random() * 80 + 10 + '%';
+      span.style.top = '0px';
+      box.appendChild(span);
+      setTimeout(() => { span.style.top = '180px'; }, 50);
+      playAudioTone(300, 'sine', 0.1);
+    }
+
+    function generateWisdom() {
+      const quotes = [
+        '"Never fry bacon without wearing a cape on Tuesdays."',
+        '"If a tomato is a fruit, then ketchup is technically a smoothie."',
+        '"Always trust a cat with an eyebrow ring."',
+        '"Space travel is just extreme camping with zero gravity."',
+        '"If sleep is so good, why isn\'t there a Sleep 2?"'
+      ];
+      document.getElementById('quoteText').innerText = quotes[Math.floor(Math.random() * quotes.length)];
+      playAudioTone(600, 'sine', 0.1);
+    }
+
+    function initDrawCanvas() {
+      const cvs = document.getElementById('drawCanvas');
+      if (!cvs) return;
+      const ctx = cvs.getContext('2d');
+      let drawing = false;
+
+      cvs.onmousedown = () => drawing = true;
+      cvs.onmouseup = () => drawing = false;
+      cvs.onmousemove = (e) => {
+        if (!drawing) return;
+        const rect = cvs.getBoundingClientRect();
+        ctx.fillStyle = '#00F0FF';
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#00F0FF';
+        ctx.beginPath();
+        ctx.arc(e.clientX - rect.left, e.clientY - rect.top, 4, 0, Math.PI * 2);
+        ctx.fill();
+      };
+    }
+
+    let ghostScore = 0;
+    function moveGhost() {
+      const btn = document.getElementById('ghostBtn');
+      if (!btn) return;
+      btn.style.left = Math.random() * 70 + 10 + '%';
+      btn.style.top = Math.random() * 60 + 20 + '%';
+    }
+    function catchGhost() {
+      ghostScore++;
+      document.getElementById('ghostScore').innerText = ghostScore;
+      playAudioTone(700, 'sine', 0.1);
+      moveGhost();
+    }
+  </script>
+</body>
+</html>
